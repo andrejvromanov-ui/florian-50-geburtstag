@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<title>🎉 50. Geburtstag Florian – Hausbuchung</title>
+
+<style>
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  background:
+    radial-gradient(circle at 10% 20%, #ffe0f0 0%, transparent 20%),
+    radial-gradient(circle at 80% 30%, #e0f7ff 0%, transparent 20%),
+    radial-gradient(circle at 30% 80%, #fff3cd 0%, transparent 20%),
+    linear-gradient(135deg, #ff4d6d, #6a5cff);
+  min-height: 100vh;
+}
+
+.container {
+  max-width: 900px;
+  margin: 30px auto;
+  padding: 20px;
+}
+
+.header {
+  text-align: center;
+  color: white;
+  margin-bottom: 25px;
+}
+
+.header h1 {
+  font-size: 42px;
+  margin: 10px 0;
+}
+
+.header h2 {
+  font-weight: normal;
+  margin: 0;
+}
+
+.card {
+  background: white;
+  padding: 22px;
+  border-radius: 14px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.15);
+  margin-bottom: 20px;
+}
+
+label {
+  display:block;
+  margin-top:12px;
+  font-weight: bold;
+}
+
+input, select, button {
+  padding: 10px;
+  width: 100%;
+  margin-top: 6px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  font-size: 15px;
+}
+
+button {
+  background: linear-gradient(135deg, #ff7a18, #ff3d77);
+  color: white;
+  border: none;
+  cursor: pointer;
+  font-weight: bold;
+  margin-top: 18px;
+}
+
+button:hover {
+  transform: translateY(-1px);
+  opacity: 0.95;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 15px;
+}
+
+th, td {
+  border-bottom: 1px solid #eee;
+  padding: 10px;
+}
+
+th {
+  background: #fafafa;
+  text-align: left;
+}
+
+.badge {
+  display: inline-block;
+  padding: 6px 10px;
+  border-radius: 999px;
+  color: white;
+  font-size: 14px;
+  margin: 4px 6px 4px 0;
+}
+
+.free { background: #28a745; }
+.full { background: #dc3545; }
+
+.footer {
+  text-align: center;
+  color: white;
+  opacity: 0.9;
+  margin-top: 10px;
+  font-size: 14px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+  <div class="header">
+    <h1>🎉 50. Geburtstag 🎉</h1>
+    <h2>Florian Baumgartner</h2>
+    <p>Hausbuchung · 01.06 – 08.06</p>
+  </div>
+
+  <div class="card">
+    <h3>🏠 Aufenthalt eintragen</h3>
+    <p>4 Zimmer · jeweils 2 Betten verfügbar</p>
+
+    <form id="bookingForm">
+      <label>Name</label>
+      <input type="text" id="name" required>
+
+      <label>Anreisedatum</label>
+      <input type="date" id="arrival" min="2026-06-01" max="2026-06-08" required>
+
+      <label>Zimmer</label>
+      <select id="room">
+        <option value="1">Zimmer 1</option>
+        <option value="2">Zimmer 2</option>
+        <option value="3">Zimmer 3</option>
+        <option value="4">Zimmer 4</option>
+      </select>
+
+      <button type="submit">🎈 Eintragen</button>
+    </form>
+  </div>
+
+  <div class="card">
+    <h3>📋 Aktuelle Belegung</h3>
+    <div id="status"></div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Anreise</th>
+          <th>Zimmer</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="list"></tbody>
+    </table>
+  </div>
+
+  <div class="footer">
+    Geburtstagshaus Florian · Bitte rechtzeitig eintragen
+  </div>
+
+</div>
+
+<script>
+const MAX_PER_ROOM = 2;
+
+function loadBookings() {
+  return JSON.parse(localStorage.getItem("florian50_bookings") || "[]");
+}
+
+function saveBookings(b) {
+  localStorage.setItem("florian50_bookings", JSON.stringify(b));
+}
+
+function roomCount(room) {
+  return loadBookings().filter(x => x.room == room).length;
+}
+
+function render() {
+  const bookings = loadBookings();
+  const tbody = document.getElementById("list");
+  tbody.innerHTML = "";
+
+  bookings.forEach((b, i) => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${b.name}</td>
+      <td>${b.arrival}</td>
+      <td>Zimmer ${b.room}</td>
+      <td><button onclick="removeEntry(${i})">Löschen</button></td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  const status = document.getElementById("status");
+  status.innerHTML = "";
+  for (let r=1; r<=4; r++) {
+    const c = roomCount(r);
+    const span = document.createElement("span");
+    span.className = "badge " + (c >= MAX_PER_ROOM ? "full" : "free");
+    span.innerText = `Zimmer ${r}: ${c}/2`;
+    status.appendChild(span);
+  }
+}
+
+function removeEntry(i) {
+  const b = loadBookings();
+  b.splice(i,1);
+  saveBookings(b);
+  render();
+}
+
+document.getElementById("bookingForm").onsubmit = e => {
+  e.preventDefault();
+  const name = document.getElementById("name").value.trim();
+  const arrival = document.getElementById("arrival").value;
+  const room = document.getElementById("room").value;
+
+  if (!name || !arrival) return;
+
+  if (roomCount(room) >= MAX_PER_ROOM) {
+    alert("Dieses Zimmer ist schon voll 🎯");
+    return;
+  }
+
+  const b = loadBookings();
+  b.push({name, arrival, room});
+  saveBookings(b);
+  render();
+  e.target.reset();
+};
+
+render();
+</script>
+
+</body>
+</html>
